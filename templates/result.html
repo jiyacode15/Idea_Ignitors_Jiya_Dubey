@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Eligibility Result - SBI Loan Portal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #eef2f7;
+  min-height: 100vh;
+}
+
+.navbar {
+  background: #1a237e;
+  color: white;
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.navbar h2 { font-size: 18px; font-weight: 600; }
+.navbar a { color: white; margin-left: 16px; text-decoration: none; font-size: 14px; }
+
+.page { width: 90%; max-width: 900px; margin: 32px auto; }
+
+.result-card {
+  background: white;
+  border-radius: 14px;
+  padding: 32px;
+  margin-bottom: 24px;
+  border-left: 6px solid #1a237e;
+}
+
+.result-card.eligible   { border-left-color: #2e7d32; }
+.result-card.moderate   { border-left-color: #f57c00; }
+.result-card.rejected   { border-left-color: #c62828; }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.result-icon { font-size: 42px; }
+.result-title { font-size: 24px; font-weight: 700; }
+.result-title.eligible { color: #2e7d32; }
+.result-title.moderate { color: #f57c00; }
+.result-title.rejected { color: #c62828; }
+
+.confidence-bar-wrap {
+  margin: 16px 0 24px;
+}
+.confidence-label {
+  font-size: 13px; color: #666; margin-bottom: 6px;
+  display: flex; justify-content: space-between;
+}
+.confidence-bar {
+  height: 10px; background: #e0e0e0; border-radius: 10px; overflow: hidden;
+}
+.confidence-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(to right, #1a237e, #1976d2);
+  transition: width 1s ease;
+}
+.confidence-fill.moderate { background: linear-gradient(to right, #f57c00, #ffa726); }
+.confidence-fill.rejected  { background: linear-gradient(to right, #c62828, #ef5350); }
+
+.badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; margin-bottom: 20px;
+}
+.badge-low    { background: #e8f5e9; color: #2e7d32; }
+.badge-medium { background: #fff3e0; color: #e65100; }
+.badge-high   { background: #ffebee; color: #c62828; }
+
+.section-title {
+  font-size: 15px; font-weight: 700; color: #1a237e;
+  margin: 24px 0 12px;
+  border-bottom: 2px solid #eef2f7; padding-bottom: 8px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.metric-card {
+  background: #f5f7ff; border-radius: 10px; padding: 16px;
+  border: 1px solid #e3e8ff;
+}
+.metric-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+.metric-value { font-size: 20px; font-weight: 700; color: #1a237e; }
+.metric-value.good   { color: #2e7d32; }
+.metric-value.warn   { color: #f57c00; }
+.metric-value.danger { color: #c62828; }
+
+.field-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+}
+.field-row:last-child { border-bottom: none; }
+.field-key { color: #666; }
+.field-val { font-weight: 600; color: #222; }
+
+.recommendation-box {
+  background: #f5f7ff; border-radius: 10px; padding: 20px;
+  border: 1px solid #c5cae9; margin-top: 16px;
+}
+.recommendation-box p { font-size: 14px; color: #333; line-height: 1.6; margin-bottom: 8px; }
+.recommendation-box p:last-child { margin-bottom: 0; }
+
+.actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.btn {
+  padding: 11px 22px; border: none; border-radius: 7px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  text-decoration: none; display: inline-block; transition: opacity .2s;
+}
+.btn:hover { opacity: .85; }
+.btn-back    { background: #1a237e; color: white; }
+.btn-approve { background: #2e7d32; color: white; }
+.btn-reject  { background: #c62828; color: white; }
+
+.applicant-info { background: #fafafa; border-radius: 10px; padding: 20px; border: 1px solid #eee; margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <h2>&#127974; SBI Loan Portal &mdash; Eligibility Result</h2>
+  <div>
+    <a href="/admin-dashboard">&#8592; Admin Dashboard</a>
+    <a href="/admin-logout">Logout</a>
+  </div>
+</div>
+
+<div class="page" id="pageContent">
+  <p style="text-align:center;padding:60px;color:#666;">Calculating eligibility...</p>
+</div>
+
+<script>
+// ============================================================
+// READ QUERY PARAMS
+// ============================================================
+var p = new URLSearchParams(window.location.search);
+
+var appId      = p.get('id')          || 'N/A';
+var name       = p.get('name')        || 'Unknown';
+var age        = parseInt(p.get('age'))    || 30;
+var income     = parseFloat(p.get('income'))  || 0;
+var loanAmt    = parseFloat(p.get('loan'))    || 0;
+var cibil      = parseInt(p.get('cibil'))  || 0;
+var employment = p.get('employment')  || p.get('loanType') || 'Salaried';
+var education  = p.get('education')   || '';
+var incomeRange= p.get('incomeRange') || '';
+var username   = p.get('username')    || '';
+
+// ============================================================
+// ELIGIBILITY ENGINE
+// ============================================================
+function calculateEligibility() {
+  var score = 0;
+  var reasons = [];
+  var warnings = [];
+
+  // CIBIL score
+  if (cibil >= 750) {
+    score += 35;
+  } else if (cibil >= 650) {
+    score += 20;
+    warnings.push('CIBIL score is moderate (' + cibil + '). A score above 750 improves approval chances.');
+  } else {
+    score += 5;
+    reasons.push('CIBIL score is low (' + cibil + '). Minimum recommended: 650.');
+  }
+
+  // Income to loan ratio
+  var emiMonths = 120; // assume 10-year tenure
+  var rateMonthly = 0.085 / 12; // 8.5% annual
+  var predictedEMI = loanAmt > 0
+    ? (loanAmt * rateMonthly * Math.pow(1 + rateMonthly, emiMonths))
+      / (Math.pow(1 + rateMonthly, emiMonths) - 1)
+    : 0;
+  predictedEMI = Math.round(predictedEMI);
+
+  var affordableEMI = Math.round(income * 0.40);
+  var emiRatio = income > 0 ? Math.round((predictedEMI / income) * 100) : 100;
+  var disposable = income - predictedEMI;
+
+  if (emiRatio <= 30) {
+    score += 30;
+  } else if (emiRatio <= 40) {
+    score += 18;
+    warnings.push('EMI-to-income ratio is ' + emiRatio + '%. Keeping it below 30% is ideal.');
+  } else {
+    score += 5;
+    reasons.push('EMI-to-income ratio is too high (' + emiRatio + '%). Loan amount may be unaffordable.');
+  }
+
+  // Age
+  if (age >= 25 && age <= 55) {
+    score += 15;
+  } else if (age > 55 && age <= 60) {
+    score += 8;
+    warnings.push('Applicant age (' + age + ') is close to retirement; tenure may be restricted.');
+  } else {
+    score += 3;
+    reasons.push('Age (' + age + ') is outside the preferred range of 25-55.');
+  }
+
+  // Employment
+  if (employment === 'Salaried' || employment === 'Government') {
+    score += 15;
+  } else if (employment === 'Self-Employed') {
+    score += 10;
+    warnings.push('Self-employed applicants may need additional income proof.');
+  } else {
+    score += 5;
+    warnings.push('Employment type "' + employment + '" may require additional documentation.');
+  }
+
+  // Education
+  if (education === 'Post Graduate' || education === 'Graduate') {
+    score += 5;
+  } else {
+    score += 2;
+  }
+
+  // Determine verdict
+  var verdict, verdictClass, icon, riskLevel, riskClass;
+
+  if (score >= 75) {
+    verdict = 'Eligible for Loan';
+    verdictClass = 'eligible';
+    icon = '&#10003;';
+    riskLevel = 'Low Risk';
+    riskClass = 'badge-low';
+  } else if (score >= 50) {
+    verdict = 'Eligible with Conditions';
+    verdictClass = 'moderate';
+    icon = '&#9888;';
+    riskLevel = 'Medium Risk';
+    riskClass = 'badge-medium';
+  } else {
+    verdict = 'Not Recommended';
+    verdictClass = 'rejected';
+    icon = '&#10007;';
+    riskLevel = 'High Risk';
+    riskClass = 'badge-high';
+  }
+
+  var confidence = Math.min(score, 99);
+
+  // Recommended loan amount (40% of income * 120 months)
+  var recommendedLoan = Math.round(affordableEMI * emiMonths * 0.85);
+
+  return {
+    score:          score,
+    confidence:     confidence,
+    verdict:        verdict,
+    verdictClass:   verdictClass,
+    icon:           icon,
+    riskLevel:      riskLevel,
+    riskClass:      riskClass,
+    predictedEMI:   predictedEMI,
+    affordableEMI:  affordableEMI,
+    emiRatio:       emiRatio,
+    disposable:     disposable,
+    recommendedLoan:recommendedLoan,
+    reasons:        reasons,
+    warnings:       warnings
+  };
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  var r = calculateEligibility();
+
+  var reasonsHtml = '';
+  if (r.reasons.length > 0) {
+    reasonsHtml = '<p><strong>Issues found:</strong></p>';
+    r.reasons.forEach(function(x) {
+      reasonsHtml += '<p>&#10007; ' + x + '</p>';
+    });
+  }
+  var warningsHtml = '';
+  if (r.warnings.length > 0) {
+    r.warnings.forEach(function(x) {
+      warningsHtml += '<p>&#9888; ' + x + '</p>';
+    });
+  }
+  var positiveHtml = '';
+  if (r.verdictClass === 'eligible') {
+    positiveHtml = '<p>&#10003; Income-to-EMI ratio is within acceptable limits.</p>' +
+                   '<p>&#10003; CIBIL score meets the required threshold.</p>';
+  }
+
+  var html =
+    '<div class="applicant-info">' +
+    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+    '<div><span style="font-size:12px;color:#888;">Application ID</span><br><strong>' + esc(appId) + '</strong></div>' +
+    '<div><span style="font-size:12px;color:#888;">Applicant</span><br><strong>' + esc(name) + '</strong></div>' +
+    '<div><span style="font-size:12px;color:#888;">Username</span><br><strong>' + esc(username) + '</strong></div>' +
+    '<div><span style="font-size:12px;color:#888;">Employment</span><br><strong>' + esc(employment) + '</strong></div>' +
+    '<div><span style="font-size:12px;color:#888;">Age</span><br><strong>' + age + ' years</strong></div>' +
+    '</div></div>' +
+
+    '<div class="result-card ' + r.verdictClass + '">' +
+    '<div class="result-header">' +
+    '<div class="result-icon">' + r.icon + '</div>' +
+    '<div class="result-title ' + r.verdictClass + '">' + r.verdict + '</div>' +
+    '</div>' +
+
+    '<span class="badge ' + r.riskClass + '">' + r.riskLevel + '</span>' +
+
+    '<div class="confidence-bar-wrap">' +
+    '<div class="confidence-label"><span>AI Confidence Score</span><span>' + r.confidence + ' / 100</span></div>' +
+    '<div class="confidence-bar"><div class="confidence-fill ' + r.verdictClass + '" style="width:' + r.confidence + '%"></div></div>' +
+    '</div>' +
+
+    '<div class="section-title">Financial Analysis</div>' +
+    '<div class="grid-2">' +
+    '<div class="metric-card"><div class="metric-label">Projected EMI (8.5%, 10yr)</div>' +
+      '<div class="metric-value ' + (r.emiRatio > 40 ? 'danger' : r.emiRatio > 30 ? 'warn' : 'good') + '">&#8377;' + r.predictedEMI.toLocaleString('en-IN') + '/mo</div></div>' +
+    '<div class="metric-card"><div class="metric-label">Max Affordable EMI (40% of income)</div>' +
+      '<div class="metric-value good">&#8377;' + r.affordableEMI.toLocaleString('en-IN') + '/mo</div></div>' +
+    '<div class="metric-card"><div class="metric-label">Monthly Income</div>' +
+      '<div class="metric-value">&#8377;' + Number(income).toLocaleString('en-IN') + '</div></div>' +
+    '<div class="metric-card"><div class="metric-label">Disposable Income After EMI</div>' +
+      '<div class="metric-value ' + (r.disposable < 0 ? 'danger' : 'good') + '">&#8377;' + r.disposable.toLocaleString('en-IN') + '</div></div>' +
+    '<div class="metric-card"><div class="metric-label">EMI-to-Income Ratio</div>' +
+      '<div class="metric-value ' + (r.emiRatio > 40 ? 'danger' : r.emiRatio > 30 ? 'warn' : 'good') + '">' + r.emiRatio + '%</div></div>' +
+    '<div class="metric-card"><div class="metric-label">CIBIL Score</div>' +
+      '<div class="metric-value ' + (cibil >= 750 ? 'good' : cibil >= 650 ? 'warn' : 'danger') + '">' + cibil + '</div></div>' +
+    '</div>' +
+
+    '<div class="section-title">Application Details</div>' +
+    '<div class="field-row"><span class="field-key">Loan Amount Requested</span><span class="field-val">&#8377;' + Number(loanAmt).toLocaleString('en-IN') + '</span></div>' +
+    '<div class="field-row"><span class="field-key">Recommended Maximum Loan</span><span class="field-val">&#8377;' + r.recommendedLoan.toLocaleString('en-IN') + '</span></div>' +
+    '<div class="field-row"><span class="field-key">Income Range</span><span class="field-val">' + esc(incomeRange) + '</span></div>' +
+    '<div class="field-row"><span class="field-key">Education</span><span class="field-val">' + esc(education || 'N/A') + '</span></div>' +
+
+    '<div class="section-title">Recommendation</div>' +
+    '<div class="recommendation-box">' + positiveHtml + warningsHtml + reasonsHtml +
+    (r.verdictClass === 'eligible' && r.reasons.length === 0 && r.warnings.length === 0
+      ? '<p>This application meets all standard criteria. Approval is recommended subject to document verification.</p>'
+      : '') +
+    '</div>' +
+
+    '<div class="actions">' +
+    '<a href="/admin-dashboard" class="btn btn-back">&#8592; Back to Dashboard</a>' +
+    '</div>' +
+    '</div>';
+
+  document.getElementById('pageContent').innerHTML = html;
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+render();
+</script>
+
+</body>
+</html>
