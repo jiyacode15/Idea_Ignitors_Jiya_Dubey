@@ -7,3 +7,4 @@ Instead of giving a simple approval/rejection, the model generates a detailed ri
 The website allows users to: Register and log in securely Fill structured loan application forms with dynamic validations Submit documents and financial details Track application status and raise complaints On the backend, the website acts as an interface layer, while the machine learning model functions as the decision engine, processing user inputs and generating real-time risk assessments through an interactive dashboard.
 This integration demonstrates a complete end-to-end solution, combining machine learning with a practical deployment interface.
 The system closely replicates how modern banking institutions evaluate loan applications, making it scalable, efficient, and aligned with real-world financial systems.
+The Website is easy to use and user friendly so that user may not get confused and can be implemented to solve real world problems
