@@ -8,3 +8,12 @@ The website allows users to: Register and log in securely Fill structured loan a
 This integration demonstrates a complete end-to-end solution, combining machine learning with a practical deployment interface.
 The system closely replicates how modern banking institutions evaluate loan applications, making it scalable, efficient, and aligned with real-world financial systems.
 The Website is easy to use and user friendly so that user may not get confused and can be implemented to solve real world problems
+
+ 🌐 Live Website  
+👉 [Open Website](https://idea-ignitors-jiya-dubey.onrender.com)
+
+🎥 Demo Video
+👉 [View Files](https://drive.google.com/drive/folders/1wMMXvjmh7XybExSdCDpUJjv29BfcvkwB?usp=sharing)
+
+🎥 Images
+👉 [View Screenshots](https://drive.google.com/drive/folders/1lRWPM-G4O7ZNnsak00Tlt11i9DChnbj5?usp=drive_link)
